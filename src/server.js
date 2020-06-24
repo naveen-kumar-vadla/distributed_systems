@@ -3,8 +3,17 @@ const app = express();
 const { ImageSets } = require('./ImageSets');
 const { Scheduler } = require('./scheduler');
 
+const getWorkerOptions = () => {
+  return {
+    host: 'localhost',
+    port: '5000',
+    method: 'post',
+    path: '/process',
+  };
+};
+
 const imageSets = new ImageSets();
-const scheduler = new Scheduler();
+const scheduler = new Scheduler(getWorkerOptions());
 scheduler.start();
 
 //log request url and method
