@@ -17,3 +17,52 @@ modules
 server - jobs
          shceduler
          
+part 4
+plan 
+user        -> server
+user (id)   <- server
+               server -> worker (id)
+user waiting   ...
+               ...
+               server <- worker (id,tags)
+user2       -> server
+user2 (id)  <- server
+               server -> worker (id)
+user2 waiting  ...
+               ...
+               server <- worker (id,tags)
+user        -> server 
+user tags   <- server
+user2       -> server 
+user2 tags  <- server
+
+we all need to know / monitor these 
+is serever up ?
+is worker_1 up ?
+is worker_2 up ?
+          .
+          .
+          .
+is worker_n up ?
+
+is there a connection b/w server and worker_1 
+is there a connection b/w server and worker_2 
+                                            .
+                                            .
+                                            .
+is there a connection b/w server and worker_n 
+
+push based mechanism (what we are using right now)
+- pusher needs to know whom all to push to
+
+pull based mechanism 
+- pullers need to know where to pull from
+- no server required
+- no need to maintain ip addresses at all time
+
+select * from people where id = 23
+get /people/23
+
+user  <==>  server -----> shceduler  <==>  [worker_1,worker_2,....,worker_n]
+              |              \/                         |
+              +------------> DB <-----------------------+
