@@ -1,1 +1,13 @@
+part 1
 url => /process/jayanth/1000/2000/2000/ravi_jayanth
+
+part 2
+plan 
+user       -> server
+user (id)  <- server
+              server -> worker (id)
+user waiting  ...
+              ...
+              server <- worker (id,tags)
+user       -> server 
+user tags  <- server
