@@ -17,6 +17,7 @@ const informWorkerFree = ({ id, tags }) => {
   const options = getServerOptions();
   options.path = `/completed-job/${id}`;
   const req = http.request(options, res => {});
+  req.write(JSON.stringify(tags));
   req.end();
 };
 

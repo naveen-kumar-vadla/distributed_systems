@@ -11,3 +11,9 @@ user waiting  ...
               server <- worker (id,tags)
 user       -> server 
 user tags  <- server
+
+part 3
+modules 
+server - jobs
+         shceduler
+         
