@@ -7,16 +7,8 @@ class Scheduler {
     this.workerOptions = workerOptions;
   }
   schedule(job) {
-    this.jobs.push(job);
-  }
-  start() {
-    setInterval(() => {
-      if (this.isWorkerFree && this.jobs.length) {
-        const job = this.jobs.shift();
-        console.log('\nScheduling jon on worker : ', job.id);
-        this.delegateToWorker(job);
-      }
-    }, 1000);
+    if (this.isWorkerFree) this.delegateToWorker(job);
+    else this.jobs.push(job);
   }
   delegateToWorker(data) {
     const options = this.workerOptions;
@@ -29,6 +21,7 @@ class Scheduler {
   }
   setWorkerFree() {
     this.isWorkerFree = true;
+    if (this.jobs.length) this.delegateToWorker(this.jobs.shift());
   }
 }
 

@@ -14,7 +14,6 @@ const getWorkerOptions = () => {
 
 const imageSets = new ImageSets();
 const scheduler = new Scheduler(getWorkerOptions());
-scheduler.start();
 
 //log request url and method
 app.use((req, res, next) => {
