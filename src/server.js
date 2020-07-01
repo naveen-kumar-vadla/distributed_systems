@@ -1,11 +1,10 @@
 const redis = require('redis');
 const express = require('express');
 const imageSets = require('./imageSets');
+const http = require('http');
 
 const app = express();
 const redisClient = redis.createClient({ db: 1 });
-
-const jobs = [];
 
 //log request url and method
 app.use((req, res, next) => {
@@ -20,20 +19,23 @@ app.get('/status/:id', (req, res) => {
   });
 });
 
-app.get('/request-job', (req, res) => {
-  let job = {};
-  if (jobs.length) {
-    job = jobs.shift();
-  }
-  res.write(JSON.stringify(job));
-  res.end();
+const getQueueBrokerOptions = () => ({
+  host: 'localhost',
+  port: '8001',
+  path: '/queue-job/',
+  method: 'post',
 });
 
 app.post('/process/:name/:count/:width/:height/:tags', (req, res) => {
   imageSets.addImageSet(redisClient, req.params).then(jobToSchedule => {
     res.send(`id:${jobToSchedule.id}`);
     res.end();
-    jobs.push(jobToSchedule);
+    const options = getQueueBrokerOptions();
+    options.path = options.path + jobToSchedule.id;
+    const qbRequest = http.request(options, res => {
+      console.log('Got from Queue Broker ', res.statusCode);
+    });
+    qbRequest.end();
   });
 });
 

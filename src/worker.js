@@ -9,7 +9,7 @@ const redisClient = redis.createClient({ db: 1 });
 const getServerOptions = () => {
   return {
     host: 'localhost',
-    port: '8000',
+    port: '8001',
     path: '/request-job',
   };
 };
