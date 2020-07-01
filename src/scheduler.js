@@ -1,27 +1,31 @@
 const http = require('http');
 
 class Scheduler {
-  constructor(workerOptions) {
+  constructor() {
     this.jobs = [];
-    this.isWorkerFree = true;
-    this.workerOptions = workerOptions;
+    this.agents = [];
+  }
+  addAgent(agent) {
+    this.agents.push(agent);
   }
   schedule(job) {
-    if (this.isWorkerFree) this.delegateToWorker(job);
+    const agent = this.agents.find(agent => agent.isFree);
+    if (agent) this.delegateToAgent(agent, job);
     else this.jobs.push(job);
   }
-  delegateToWorker(data) {
-    const options = this.workerOptions;
+  delegateToAgent(agent, data) {
+    const options = agent.getOptions();
     const req = http.request(options, res => {
-      console.log('Got from worker', res.statusCode);
+      console.log('Got', res.statusCode, 'from worker', agent.agentId);
     });
     req.write(JSON.stringify(data));
     req.end();
-    this.isWorkerFree = false;
+    agent.setBusy();
   }
-  setWorkerFree() {
-    this.isWorkerFree = true;
-    if (this.jobs.length) this.delegateToWorker(this.jobs.shift());
+  setWorkerFree(agentId) {
+    const agent = this.agents.find(agent => (agent.agentId == agentId));
+    agent.isFree = true;
+    if (this.jobs.length) this.delegateToAgent(agent, this.jobs.shift());
   }
 }
 
