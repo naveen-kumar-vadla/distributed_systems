@@ -13,9 +13,7 @@ const createJob = (client, id, imageSet) => {
       []
     );
     const jobDetails = status.concat(receivedAt, imageSetDetails);
-    client.hmset(`job_${id}`, jobDetails, (err, res) =>
-      resolve(Object.assign({ id }, imageSet))
-    );
+    client.hmset(`job_${id}`, jobDetails, (err, res) => resolve({ id }));
   });
 };
 
