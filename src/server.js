@@ -2,22 +2,10 @@ const redis = require('redis');
 const express = require('express');
 const imageSets = require('./imageSets');
 
-const { Scheduler } = require('./scheduler');
-const { Agent } = require('./Agent');
-
 const app = express();
 const redisClient = redis.createClient({ db: 1 });
 
-const getAgentOptions = port => ({
-  host: 'localhost',
-  port,
-  method: 'post',
-  path: '/process',
-});
-
-const scheduler = new Scheduler();
-scheduler.addAgent(new Agent(1, getAgentOptions(5000)));
-scheduler.addAgent(new Agent(2, getAgentOptions(5001)));
+const jobs = [];
 
 //log request url and method
 app.use((req, res, next) => {
@@ -32,8 +20,12 @@ app.get('/status/:id', (req, res) => {
   });
 });
 
-app.post('/completed-job/:agentId', (req, res) => {
-  scheduler.setWorkerFree(Number(req.params.agentId));
+app.get('/request-job', (req, res) => {
+  let job = {};
+  if (jobs.length) {
+    job = jobs.shift();
+  }
+  res.write(JSON.stringify(job));
   res.end();
 });
 
@@ -41,7 +33,7 @@ app.post('/process/:name/:count/:width/:height/:tags', (req, res) => {
   imageSets.addImageSet(redisClient, req.params).then(jobToSchedule => {
     res.send(`id:${jobToSchedule.id}`);
     res.end();
-    scheduler.schedule(jobToSchedule);
+    jobs.push(jobToSchedule);
   });
 });
 
