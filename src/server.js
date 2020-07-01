@@ -1,19 +1,20 @@
+const redis = require('redis');
 const express = require('express');
-const app = express();
-const { ImageSets } = require('./ImageSets');
+const imageSets = require('./imageSets');
+
 const { Scheduler } = require('./scheduler');
 const { Agent } = require('./Agent');
 
-const getAgentOptions = port => {
-  return {
-    host: 'localhost',
-    port,
-    method: 'post',
-    path: '/process',
-  };
-};
+const app = express();
+const redisClient = redis.createClient({ db: 1 });
 
-const imageSets = new ImageSets();
+const getAgentOptions = port => ({
+  host: 'localhost',
+  port,
+  method: 'post',
+  path: '/process',
+});
+
 const scheduler = new Scheduler();
 scheduler.addAgent(new Agent(1, getAgentOptions(5000)));
 scheduler.addAgent(new Agent(2, getAgentOptions(5001)));
@@ -25,9 +26,10 @@ app.use((req, res, next) => {
 });
 
 app.get('/status/:id', (req, res) => {
-  const imageSet = imageSets.get(req.params.id);
-  res.write(JSON.stringify(imageSet));
-  res.end();
+  imageSets.get(redisClient, req.params.id).then(imageSet => {
+    res.write(JSON.stringify(imageSet));
+    res.end();
+  });
 });
 
 app.post('/completed-job/:agentId/:id', (req, res) => {
@@ -36,17 +38,19 @@ app.post('/completed-job/:agentId/:id', (req, res) => {
   req.on('end', () => {
     const tags = JSON.parse(data);
     console.log('Received from', req.params.agentId, 'Tags', tags);
-    imageSets.completedProcessing(req.params.id, tags);
-    scheduler.setWorkerFree(Number(req.params.agentId));
-    res.end();
+    imageSets.completedProcessing(redisClient, req.params.id, tags).then(() => {
+      scheduler.setWorkerFree(Number(req.params.agentId));
+      res.end();
+    });
   });
 });
 
 app.post('/process/:name/:count/:width/:height/:tags', (req, res) => {
-  const jobToSchedule = imageSets.addImageSet(req.params);
-  res.send(`id:${jobToSchedule.id}`);
-  res.end();
-  scheduler.schedule(jobToSchedule);
+  imageSets.addImageSet(redisClient, req.params).then(jobToSchedule => {
+    res.send(`id:${jobToSchedule.id}`);
+    res.end();
+    scheduler.schedule(jobToSchedule);
+  });
 });
 
 app.listen(8000, () => console.log('listening on 8000...'));
